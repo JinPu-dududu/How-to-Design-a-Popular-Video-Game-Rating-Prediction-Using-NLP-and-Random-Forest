@@ -1,30 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import pickle
 # Restore from a file
 f = open('review_game.p', 'rb')
 df = pickle.load(f)
 
-
-# In[ ]:
-
-
 df['reviewText'] = df['reviewText'].astype(str)
 df['reviewText'].head()
 
 
-# In[ ]:
-
-
 apikey = '...'
 url = 'https://api.us-south.natural-language-understanding.watson.cloud.ibm.com/instances/42f361bc-4cce-4639-b79f-fede5ffdbf02'
-
-
-# In[ ]:
 
 
 #https://cloud.ibm.com/apidocs/natural-language-understanding/natural-language-understanding
@@ -40,10 +27,7 @@ natural_language_understanding = NaturalLanguageUnderstandingV1(version='2019-07
 natural_language_understanding.set_service_url(url)
 
 
-# # Sentiment Analysis
-
-# In[171]:
-
+## Sentiment Analysis
 
 with open('keyword2.txt','r') as f:
     keylist3 = f.read()
@@ -51,15 +35,7 @@ f.close()
 keylist3 = keylist3.split(',')
 len(keylist3)
 
-
-# In[172]:
-
-
 ids = df['asin'].unique()
-
-
-# In[173]:
-
 
 product_review = []
 for i in ids:
@@ -67,28 +43,16 @@ for i in ids:
     product_review.append((i,review))
 
 
-# In[ ]:
-
-
 product_review = pd.DataFrame(product_review,columns=['asin','review'])
 product_review.head()
-
-
-# In[ ]:
 
 
 product_review['length'] = product_review['review'].apply(lambda x:len(x))
 
 
-# In[ ]:
-
-
 fig,ax = plt.subplots(1,1,figsize=(18,6))
 product_review['length'].plot()
 plt.ylim(0,100000)
-
-
-# In[ ]:
 
 
 def get_sentiment_keywords(text_,keylist):
@@ -104,20 +68,10 @@ def get_sentiment_keywords(text_,keylist):
             return('')
 
 
-# In[ ]:
-
-
 product_review['sentimentJson2'] = product_review.apply(lambda row:get_sentiment_keywords(row.review,keylist3), axis=1)
 
 
-# In[ ]:
-
-
 product_sentiment = product_review[product_review['sentimentJson2']!=""][['asin','sentimentJson2']]
-
-
-# In[ ]:
-
 
 def extract_sentiment(x,key):
     targets = json.loads(x)['sentiment']['targets']
@@ -129,10 +83,6 @@ def extract_sentiment(x,key):
         
 for key in keylist3:
     product_sentiment[key] =  product_sentiment['sentimentJson2'].apply(lambda x: extract_sentiment(x,key))
-
-
-# In[ ]:
-
 
 product_sentiment.columns
 

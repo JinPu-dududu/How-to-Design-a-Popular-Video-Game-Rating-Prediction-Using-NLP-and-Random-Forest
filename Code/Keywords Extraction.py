@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
 
 import pickle
 # Restore from a file
@@ -10,21 +8,13 @@ f = open('review_game.p', 'rb')
 df = pickle.load(f)
 
 
-# In[ ]:
-
 
 df['reviewText'] = df['reviewText'].astype(str)
 df['reviewText'].head()
 
 
-# In[ ]:
-
-
 apikey = '...'
 url = 'https://api.us-south.natural-language-understanding.watson.cloud.ibm.com/instances/42f361bc-4cce-4639-b79f-fede5ffdbf02'
-
-
-# In[ ]:
 
 
 #https://cloud.ibm.com/apidocs/natural-language-understanding/natural-language-understanding
@@ -40,10 +30,7 @@ natural_language_understanding = NaturalLanguageUnderstandingV1(version='2019-07
 natural_language_understanding.set_service_url(url)
 
 
-# # Get keyword list
-
-# In[ ]:
-
+## Get keyword list
 
 from sklearn.utils import shuffle
 import pandas as pd
@@ -93,8 +80,6 @@ for k in range(10):
     word_key_list_all.extend(word_key_list)
 
 
-# In[ ]:
-
 
 most_common_dict = dict()
 for i in most_common_all:
@@ -104,14 +89,8 @@ for i in most_common_all:
         most_common_dict[i[0]] = i[1]
 
 
-# In[ ]:
-
-
 sorted_most_common = sorted(most_common_dict.items(),key=lambda x:x[1],reverse=True)
 sorted_most_common
-
-
-# In[ ]:
 
 
 word_key_list_dict = dict()
@@ -120,10 +99,4 @@ for i in word_key_list_all:
         word_key_list_dict[i[0]] = list(set(word_key_list_dict[i[0]]+i[2]))
     else:
         word_key_list_dict[i[0]] = i[2]
-
-
-# In[ ]:
-
-
-word_key_list_dict['player']
 

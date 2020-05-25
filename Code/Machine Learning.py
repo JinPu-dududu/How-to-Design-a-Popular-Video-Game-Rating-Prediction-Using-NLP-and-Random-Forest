@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 import pickle
 import numpy as np
@@ -20,8 +18,6 @@ with open('product_sentiment_new.p', 'rb') as f:
 review_game.shape,meta_game.shape,product_sentiment.shape
 
 
-# In[4]:
-
 
 # review>=5
 review_size = review_game.groupby('asin').size()
@@ -33,16 +29,11 @@ product_sentiment_clean.drop('sentimentJson2',axis=1,inplace=True)
 has_many_review_ids.shape,product_sentiment_clean.shape
 
 
-# In[5]:
-
 
 # ratings
 review_game_clean = review_game[review_game['asin'].isin(has_many_review_ids)]
 ratings = review_game_clean.groupby('asin').mean()['overall']
 ratings.shape
-
-
-# In[6]:
 
 
 # price
@@ -54,10 +45,8 @@ meta_game_clean = meta_game_clean.groupby('asin').mean()['true_price'].reset_ind
 meta_game_clean['true_price'] = (meta_game_clean['true_price'] - np.mean(meta_game_clean['true_price']))/np.std(meta_game_clean['true_price'])
 
 
-# In[13]:
 
-
-###### merge all into one dataset
+# merge all into one dataset
 data_ = product_sentiment_clean.merge(meta_game_clean,on='asin')
 data = data_.merge(pd.DataFrame(ratings).reset_index(),on='asin')
 
@@ -68,8 +57,6 @@ sns.distplot(data['overall'])
 np.percentile(data['overall'],75),sum(data['overall']<4.5)/sum(data['overall']>=4.4),data.shape
 
 
-# In[6]:
-
 
 # cut reviews into 2 bins
 data_ml = data.copy().set_index('asin')
@@ -77,8 +64,6 @@ data_ml['rating'] = np.where(data_ml['overall']>=4.4,1,0)
 data_ml.drop('overall',axis=1,inplace=True)
 data_ml.head()
 
-
-# In[7]:
 
 
 # add review size as variable
@@ -89,23 +74,17 @@ data_ml = data_ml.join(pd.DataFrame(review_size[ids],columns=['n_reviews']))
 data = data.join(pd.DataFrame(review_size[ids],columns=['n_reviews']))
 
 
-# In[8]:
-
 
 data_ml.columns
 
 
-# # Machine Learning
 
-# ## Feature engineering
 
-# In[11]:
+## Machine Learning
 
+### Feature engineering
 
 data_ml.head()
-
-
-# In[12]:
 
 
 import pandas as pd
@@ -130,14 +109,8 @@ warnings.filterwarnings("ignore")
 import pickle
 
 
-# In[13]:
-
-
 seed=123
 np.random.seed(seed)
-
-
-# In[14]:
 
 
 def model_cross_validation(model,X,y,folds):
@@ -159,9 +132,6 @@ def model_cross_validation(model,X,y,folds):
     return train_accuracy,validation_accuracy,auc
 
 
-# In[15]:
-
-
 # transform into binary
 def binary_substitude(row,sub):
     if isinstance(sub,str):
@@ -181,14 +151,8 @@ def keyword_substitude(row,sub):
     return np.nanmean(row[list(sub)])
 
 
-# In[16]:
-
-
-#remove some factors
+# remove some factors
 data_ml.drop(['player'],axis=1,inplace=True)
-
-
-# In[17]:
 
 
 substitude = [('old','older'),('real','realistic'),('character','characters'),('control','controls'),('enemy','enemies'),
@@ -208,9 +172,6 @@ for sub in substitude:
             data_ml.drop(i,axis=1,inplace=True)
 
 
-# In[18]:
-
-
 substitude2 = ['wii','final fantasy','resident evil','sega gt','star wars','mario','madden','digimon','call of duty',
                ('nintendo','gba'),'god of war','zelda','mech','sonic','golden sun','pokemon','xbox']
 for sub in substitude2:
@@ -224,9 +185,6 @@ for sub in substitude2:
     elif isinstance(sub,tuple):
         for i in sub:
             data_ml.drop(i,axis=1,inplace=True)
-
-
-# In[19]:
 
 
 substitude3 = [('action','battle','fight','combat','fighting','fighter','shoot','shooting'),'adventure','rpg','strategy',
@@ -245,14 +203,10 @@ for sub in substitude3:
             data_ml.drop(i,axis=1,inplace=True)
 
 
-# In[21]:
-
 
 data_ml.fillna(0,inplace=True)
 data_ml.head()
 
-
-# In[23]:
 
 
 ### Train-test set split
@@ -260,16 +214,8 @@ train,test = train_test_split(data_ml,test_size=0.25,shuffle=True)
 train.shape,test.shape  # Too many features compared to the sample size
 
 
-# In[24]:
 
-
-train.shape,test.shape
-
-
-# ## Resample
-
-# In[25]:
-
+### Resample
 
 x_train = train.drop('rating',axis=1,inplace=False).values
 y_train = train['rating'].values
@@ -279,29 +225,16 @@ names = train.drop('rating',axis=1,inplace=False).columns
 x_train.shape,x_test.shape
 
 
-# In[26]:
-
-
 # from imblearn.over_sampling import SMOTE
 # smote = SMOTE(0.5,random_state=2)
 # x_train, y_train = smote.fit_sample(x_train, y_train)
-
-
-# In[27]:
-
 
 from imblearn.under_sampling import RandomUnderSampler
 rus = RandomUnderSampler(0.5)
 x_train, y_train = rus.fit_sample(x_train, y_train)
 
 
-# In[28]:
-
-
 x_train.shape,sum(y_train==0),sum(y_train==1)
-
-
-# In[29]:
 
 
 ### K-folds
@@ -309,10 +242,7 @@ kf=KFold(5,shuffle=True)
 folds=list(kf.split(x_train))
 
 
-# ## Feature Selection Based on Importance
-
-# In[30]:
-
+### Feature Selection Based on Importance
 
 x_train_df = pd.DataFrame(x_train,columns=names)
 
@@ -343,30 +273,15 @@ def f_test(x, y, feature_names, p_cutoff = 0.05):
             scores[i] = raw_scores[i]
     return dict(zip(feature_names,scores))
 
-
-# In[31]:
-
-
 score_data = f_test(x_train_df, y_train, feature_names, p_cutoff = 0.1)
 score_data = {key:val for key, val in score_data.items() if val != 0}
-
-
-# In[32]:
-
 
 importance_scores = simple_feature_importance(x_train_df, y_train, model='clas')
 importance_scores = importance_scores[importance_scores['Score']>=min(score_data.values())]
 keyword_importance = list(importance_scores.index)
 
-
-# In[33]:
-
-
 # Get the remaining variables (need to excl. rating to get all IVs.)
 keyword_importance[:5]
-
-
-# In[34]:
 
 
 names2 = keyword_importance
@@ -375,10 +290,8 @@ x_test2 = test[names2].values
 x_train2.shape,x_test2.shape
 
 
-# ## Feature Selection - rfe
 
-# In[35]:
-
+### Feature Selection - rfe
 
 x_train3 = pd.DataFrame(x_train,columns=names)
 x_test3 = pd.DataFrame(x_train,columns=names)
@@ -407,10 +320,6 @@ x_train3.drop(labels=quasi_constant_feature, axis=1,inplace=True)
 x_test3.drop(labels=quasi_constant_feature, axis=1,inplace=True)
 names3.drop(labels=quasi_constant_feature)
 
-
-# In[36]:
-
-
 from sklearn.feature_selection import RFECV
 
 from sklearn.ensemble import RandomForestClassifier
@@ -426,20 +335,14 @@ selection  = rfe.fit(x_train3, y_train)
 # print the selected features.
 print(x_train3.columns[selection.support_])
 
-
-# In[37]:
-
-
 names3 = x_train3.columns[selection.support_]
 x_train3 = x_train3[names3].values
 x_test3 = x_test3[names3].values
 x_train3.shape,x_test3.shape
 
 
-# ## Random forest - feature selection
 
-# In[38]:
-
+### Random forest
 
 ### Random Forest - grid serach
 parameters = {
@@ -453,17 +356,12 @@ best_C_RF = model_RF.best_params_
 best_C_RF
 
 
-# In[39]:
-
-
 ### Random Forest - grid serach (feature importance)
 model_RF2 = GridSearchCV(RandomForestClassifier(),parameters,cv=5)
 model_RF2.fit(x_train2,y_train)
 best_C_RF2 = model_RF2.best_params_
 best_C_RF2
 
-
-# In[40]:
 
 
 ### Random Forest - grid serach (rfe)
@@ -473,10 +371,8 @@ best_C_RF3 = model_RF3.best_params_
 best_C_RF3
 
 
-# In[41]:
 
-
-# conclude
+### conclude
 best_RF = RandomForestClassifier(     
     n_estimators=best_C_RF['n_estimators'],
      max_depth= best_C_RF['max_depth'],
@@ -505,9 +401,6 @@ vacc[columns[2]]= validation_accuracy3
 auc[columns[2]] = auc_3
 
 
-# In[42]:
-
-
 fig,axes = plt.subplots(1,2,figsize=(12,6),sharey=True)
 vacc.boxplot(ax=axes[0])
 auc.boxplot(ax=axes[1])
@@ -515,16 +408,10 @@ axes[0].set_ylabel('Accuracy')
 axes[1].set_ylabel('AUC')
 
 
-# # Interpretation
 
-# In[88]:
-
+### Interpretation
 
 rf = best_RF.fit(x_train,y_train)
-
-
-# In[89]:
-
 
 from sklearn.inspection import permutation_importance
 
